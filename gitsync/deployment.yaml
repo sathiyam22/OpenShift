@@ -30,8 +30,8 @@ spec:
           # NOTE: git-sync already runs as non-root.
           image: k8s.gcr.io/git-sync/git-sync:v3.2.2
           args:
-            - -repo=https://github.com/kubernetes/git-sync
-            - -branch=master
+            - -repo=https://github.com/sathiyam22/OpenShift.git
+            - -branch=main
             - -depth=1
             - -wait=60
             - -dest=current
