@@ -36,6 +36,7 @@ spec:
             - -wait=60
             - -dest=current
             - -root=/git
+            - -one-time=false
           volumeMounts:
             - name: git-content
               mountPath: /git
