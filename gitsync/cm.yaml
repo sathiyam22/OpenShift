@@ -2,8 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: my-cm
-  namespace: sync
+  namespace: default
 data:
-  project.name: ikea
-  project.type: itmtocloud
-  team.size: 8
+  project.name: "ikea"
+  project.type: "itmtocloud"
+  team.size: "8"
