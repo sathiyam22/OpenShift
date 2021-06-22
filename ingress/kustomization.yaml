@@ -1,10 +1,8 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
 resources:
-  - nginx-deploy-main.yaml
-  - nginx-deploy-blue.yaml
-  - nginx-deploy-green.yaml
-  - nginx-main-svc.yaml
-  - nginx-blue-svc.yaml
-  - nginx-green-svc.yaml
-  - ingress-1.yaml
+- nginx-deploy-main.yaml
+- nginx-deploy-blue.yaml
+- nginx-deploy-green.yaml
+- nginx-main-svc.yaml
+- nginx-blue-svc.yaml
+- nginx-green-svc.yaml
+- ingress-1.yaml
