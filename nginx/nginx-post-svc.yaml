@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: npsvc
 spec:
+  selector:
+    app: nginx
   ports:
   - name: nginx
     protocol: TCP
