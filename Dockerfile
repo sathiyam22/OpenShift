@@ -1,30 +1,24 @@
-FROM python:2-alpine3.8
+FROM dpage/pgadmin4 as pgadmin4
 
-# create a non-privileged user to use at runtime
-RUN addgroup -g 50 -S pgadmin \
- && adduser -D -S -h /pgadmin -s /sbin/nologin -u 1000 -G pgadmin pgadmin \
- && mkdir -p /pgadmin/config /pgadmin/storage \
- && chown -R 1000:50 /pgadmin
+# Create pgadmin user
+ENV_HOME=/pgadmin
+RUN mkdir -p ${HOME} && \
+mkdir -p ${HOME}/pgadmin && \
+useradd -u 1001 -r -g 0 -G pgadmin -d ${HOME} -s /bin/bash \
+-c "Default Application User" pgadmin
 
-# Install postgresql tools for backup/restore
-RUN apk add --no-cache libedit postgresql \
- && cp /usr/bin/psql /usr/bin/pg_dump /usr/bin/pg_dumpall /usr/bin/pg_restore /usr/local/bin/ \
- && apk del postgresql
+# Set user home and permissions with group 0 and writeable.
+RUN chmod -R 700 ${HOME} && chown -R 1001:0 ${HOME}
 
-RUN apk add --no-cache postgresql-dev libffi-dev
+# Create the log folder and set permissions
+RUN mkdir /var/log/pgadmin && \
+chmod 0600 /var/log/pgadmin && \
+chown 1001:0 /var/log/pgadmin
 
-ENV PGADMIN_VERSION=3.6
-ENV PYTHONDONTWRITEBYTECODE=1
+# Run as 1001 (pgadmin)
+USER 1001
 
-RUN apk add --no-cache alpine-sdk linux-headers \
- && pip install --upgrade pip \
- && echo "https://ftp.postgresql.org/pub/pgadmin/pgadmin4/v${PGADMIN_VERSION}/pip/pgadmin4-${PGADMIN_VERSION}-py2.py3-none-any.whl" | pip install --no-cache-dir -r /dev/stdin \
- && apk del alpine-sdk linux-headers
+VOLUME /var/lib/pgadmin
+EXPOSE 80 443
 
-EXPOSE 5050
-
-COPY LICENSE config_distro.py /usr/local/lib/python2.7/site-packages/pgadmin4/
-
-USER pgadmin:pgadmin
-CMD ["python", "./usr/local/lib/python2.7/site-packages/pgadmin4/pgAdmin4.py"]
-VOLUME /pgadmin/
+ENTRYPOINT ["/entrypoint.sh"]
