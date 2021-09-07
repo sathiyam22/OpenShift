@@ -1,19 +1,29 @@
-FROM dpage/pgadmin4 as pgadmin4
+# pgadmin-docker
+FROM centos:7
+MAINTAINER Steven Mirabito (smirabito@csh.rit.edu)
 
-USER root 
-RUN chown -R 1000720000:1000720000 /pgadmin4 && \
-    chown -R 1000720000:1000720000 /var && \
-    chown -R 1000720000:1000720000 /var/lib/pgadmin && \
-    chmod -R 0777 /pgadmin4 && \
-    chmod -R 0777 /var/lib/pgadmin && \
-    mkdir -p /var/lib/pgadmin/sessions && \
-    chmod -R 0777 /var/lib/pgadmin/sessions && \ 
-    sed 's@python /run_pgadmin.py@python /pgadmin4/run_pgadmin.py@g' /entrypoint.sh
-    chmod -R 0777 /var/lib/pgadmin && \
+# Install required packages
+RUN yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm && \
+yum -y install epel-release && \
+yum -y update && \
+yum -y install pgadmin4 python-gunicorn
 
-USER 1000720000
+# Copy config file and run script into the container
+COPY config_local.py run.sh /usr/lib/python2.7/site-packages/pgadmin4-web/
+RUN chmod +x /usr/lib/python2.7/site-packages/pgadmin4-web/run.sh
 
-VOLUME /var/lib/pgadmin
-EXPOSE 80 443
+# Create the application user and drop privileges
+RUN useradd -r -d /pgadmin-data -s /sbin/nologin -c "pgAdmin" pgadmin && \
+mkdir -p /pgadmin-data && \
+chown -R pgadmin:pgadmin /pgadmin-data && \
+chmod -R og+rwx /pgadmin-data
+USER pgadmin
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Set the working directory to the pgadmin4-web root
+WORKDIR /usr/lib/python2.7/site-packages/pgadmin4-web
+
+# Expose the default port
+EXPOSE 8080
+
+# Run the application
+CMD ./run.sh
