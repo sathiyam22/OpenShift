@@ -1,7 +1,7 @@
 FROM dpage/pgadmin4 as pgadmin4
 
 # Create pgadmin user
-ENV_HOME=/pgadmin
+HOME=/pgadmin
 RUN mkdir -p ${HOME} && \
 mkdir -p ${HOME}/pgadmin && \
 useradd -u 1001 -r -g 0 -G pgadmin -d ${HOME} -s /bin/bash \
