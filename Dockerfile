@@ -1,29 +1,30 @@
-# pgadmin-docker
-FROM centos:7
-MAINTAINER Steven Mirabito (smirabito@csh.rit.edu)
+FROM python:2-alpine3.8
 
-# Install required packages
-RUN yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-7-x86_64/pgdg-centos96-9.6-3.noarch.rpm && \
-yum -y install epel-release && \
-yum -y update && \
-yum -y install pgadmin4 python-gunicorn
+# create a non-privileged user to use at runtime
+RUN addgroup -g 50 -S pgadmin \
+ && adduser -D -S -h /pgadmin -s /sbin/nologin -u 1000 -G pgadmin pgadmin \
+ && mkdir -p /pgadmin/config /pgadmin/storage \
+ && chown -R 1000:50 /pgadmin
 
-# Copy config file and run script into the container
-COPY config_local.py run.sh /usr/lib/python2.7/site-packages/pgadmin4-web/
-RUN chmod +x /usr/lib/python2.7/site-packages/pgadmin4-web/run.sh
+# Install postgresql tools for backup/restore
+RUN apk add --no-cache libedit postgresql \
+ && cp /usr/bin/psql /usr/bin/pg_dump /usr/bin/pg_dumpall /usr/bin/pg_restore /usr/local/bin/ \
+ && apk del postgresql
 
-# Create the application user and drop privileges
-RUN useradd -r -d /pgadmin-data -s /sbin/nologin -c "pgAdmin" pgadmin && \
-mkdir -p /pgadmin-data && \
-chown -R pgadmin:pgadmin /pgadmin-data && \
-chmod -R og+rwx /pgadmin-data
-USER pgadmin
+RUN apk add --no-cache postgresql-dev libffi-dev
 
-# Set the working directory to the pgadmin4-web root
-WORKDIR /usr/lib/python2.7/site-packages/pgadmin4-web
+ENV PGADMIN_VERSION=3.6
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Expose the default port
-EXPOSE 8080
+RUN apk add --no-cache alpine-sdk linux-headers \
+ && pip install --upgrade pip \
+ && echo "https://ftp.postgresql.org/pub/pgadmin/pgadmin4/v${PGADMIN_VERSION}/pip/pgadmin4-${PGADMIN_VERSION}-py2.py3-none-any.whl" | pip install --no-cache-dir -r /dev/stdin \
+ && apk del alpine-sdk linux-headers
 
-# Run the application
-CMD ./run.sh
+EXPOSE 5050
+
+COPY LICENSE config_distro.py /usr/local/lib/python2.7/site-packages/pgadmin4/
+
+USER pgadmin:pgadmin
+CMD ["python", "./usr/local/lib/python2.7/site-packages/pgadmin4/pgAdmin4.py"]
+VOLUME /pgadmin/
